@@ -64,9 +64,7 @@ RSpec.describe "User visits articles by tag", type: :system do
         sidekiq_perform_enqueued_jobs
 
         visit "/t/javascript"
-        page.execute_script("window.initializeBaseApp()")
         page.execute_script("window.scrollTo(0, 100000)")
-        wait_for_javascript
 
         within("#articles-list") do
           articles.each do |article|
