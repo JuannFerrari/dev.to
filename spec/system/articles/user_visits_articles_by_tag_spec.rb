@@ -57,6 +57,24 @@ RSpec.describe "User visits articles by tag", type: :system do
         create_list(:article, 3, tags: "javascript", user: author, published_at: Time.current)
         visit "/t/javascript"
       end
+
+      it "loads correct articles", js: true, elasticsearch: "FeedContent" do
+        stub_request(:post, "http://www.google-analytics.com/collect")
+        articles = create_list(:article, 6, tags: "javascript")
+        sidekiq_perform_enqueued_jobs
+
+        visit "/t/javascript"
+        page.execute_script("window.initializeBaseApp()")
+        page.execute_script("window.scrollTo(0, 100000)")
+        wait_for_javascript
+
+        within("#articles-list") do
+          articles.each do |article|
+            expect(page).to have_text(article.title)
+          end
+          expect(page).not_to have_text(article2.title)
+        end
+      end
     end
   end
 
