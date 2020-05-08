@@ -104,6 +104,7 @@ gem "uglifier", "~> 4.2" # Uglifier minifies JavaScript files
 gem "ulid", "~> 1.2" # Universally Unique Lexicographically Sortable Identifier implementation for Ruby
 gem "validate_url", "~> 1.0" # Library for validating urls in Rails
 gem "webpacker", "~> 5.1.1" # Use webpack to manage app-like JavaScript modules in Rails
+gem "yaaf", "~> 0.1.1" # YAAF is a gem that let you create form objects in an easy and Rails friendly way
 
 group :development do
   gem "better_errors", "~> 2.6" # Provides a better error page for Rails and other Rack apps
