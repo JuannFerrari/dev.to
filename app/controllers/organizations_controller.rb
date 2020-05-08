@@ -1,21 +1,16 @@
 class OrganizationsController < ApplicationController
   after_action :verify_authorized
+  before_action :set_organization, only: %i[update generate_new_secret]
+  before_action :set_user_info
+  before_action :validate_filename, only: %i[create update]
   rescue_from Errno::ENAMETOOLONG, with: :log_image_data_to_datadog
 
   def create
-    @tab = "organization"
-    @user = current_user
-    @tab_list = @user.settings_tab_list
-
-    unless valid_filename?
-      render template: "users/edit"
-      return
-    end
-
-    @organization = Organization.new(organization_params)
+    @form = OrganizationForm.new(organization_attributes: organization_params, current_user: current_user)
+    @organization = @form.organization
     authorize @organization
-    if @organization.save
-      @organization_membership = OrganizationMembership.create!(organization_id: @organization.id, user_id: current_user.id, type_of_user: "admin")
+
+    if @form.save
       flash[:settings_notice] = "Your organization was successfully created and you are an admin."
       redirect_to "/settings/organization/#{@organization.id}"
     else
@@ -24,16 +19,6 @@ class OrganizationsController < ApplicationController
   end
 
   def update
-    @user = current_user
-    @tab = "organization"
-    @tab_list = @user.settings_tab_list
-    set_organization
-
-    unless valid_filename?
-      render template: "users/edit"
-      return
-    end
-
     if @organization.update(organization_params.merge(profile_updated_at: Time.current))
       flash[:settings_notice] = "Your organization was successfully updated."
       redirect_to "/settings/organization"
@@ -43,7 +28,6 @@ class OrganizationsController < ApplicationController
   end
 
   def generate_new_secret
-    set_organization
     @organization.secret = @organization.generated_random_secret
     @organization.save
     flash[:settings_notice] = "Your org secret was updated"
@@ -91,10 +75,24 @@ class OrganizationsController < ApplicationController
       end
   end
 
+  def set_user_info
+    @user = current_user
+    @tab = "organization"
+    @tab_list = @user.settings_tab_list
+  end
+
   def set_organization
     @organization = Organization.find_by(id: organization_params[:id])
+    @organization_membership = OrganizationMembership.find_by(user_id: current_user.id, organization_id: @organization.id)
+    @org_organization_memberships = @organization.organization_memberships.includes(:user)
     not_found unless @organization
     authorize @organization
+  end
+
+  def validate_filename
+    return if valid_filename?
+
+    render template: "users/edit"
   end
 
   def valid_filename?
@@ -103,6 +101,7 @@ class OrganizationsController < ApplicationController
 
     if action_name == "create"
       @organization = Organization.new(organization_params.except(:profile_image))
+      @organization = @organization
       authorize @organization
     end
 
