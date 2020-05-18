@@ -1,5 +1,6 @@
 class Organization < ApplicationRecord
   include CloudinaryHelper
+  include ImageUploads
 
   COLOR_HEX_REGEXP = /\A#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})\z/.freeze
   INTEGER_REGEXP = /\A\d+\z/.freeze
@@ -47,6 +48,7 @@ class Organization < ApplicationRecord
   validates :url, length: { maximum: 200 }, url: { allow_blank: true, no_local: true }
 
   validate :unique_slug_including_users_and_podcasts, if: :slug_changed?
+  validate :valid_filename
 
   after_save :bust_cache
   before_save :generate_secret
@@ -66,6 +68,12 @@ class Organization < ApplicationRecord
   alias_attribute :old_username, :old_slug
   alias_attribute :old_old_username, :old_old_slug
   alias_attribute :website_url, :url
+
+  def valid_filename
+    return true unless long_filename?(profile_image.file)
+
+    errors.add(:profile_image, FILENAME_TOO_LONG_MESSAGE)
+  end
 
   def check_for_slug_change
     return unless slug_changed?

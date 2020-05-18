@@ -5,11 +5,6 @@ class OrganizationsController < ApplicationController
   def create
     set_user_info
 
-    unless valid_filename?
-      render template: "users/edit"
-      return
-    end
-
     @form = OrganizationForm.new(organization_attributes: organization_params, current_user: current_user)
     @organization = @form.organization
     authorize @organization
@@ -26,12 +21,7 @@ class OrganizationsController < ApplicationController
     set_user_info
     set_organization
 
-    unless valid_filename?
-      render template: "users/edit"
-      return
-    end
-
-    if @organization.update(organization_params.merge(profile_updated_at: Time.current))
+    if @organization.update!(organization_params.merge(profile_updated_at: Time.current))
       flash[:settings_notice] = "Your organization was successfully updated."
       redirect_to "/settings/organization"
     else
@@ -101,20 +91,5 @@ class OrganizationsController < ApplicationController
     @organization_membership = OrganizationMembership.find_by(user_id: current_user.id, organization_id: @organization.id)
     @org_organization_memberships = @organization.organization_memberships.includes(:user)
     authorize @organization
-  end
-
-  def valid_filename?
-    image = params.dig("organization", "profile_image")
-
-    return true unless long_filename?(image)
-
-    if action_name == "create"
-      @organization = Organization.new(organization_params.except(:profile_image))
-      @organization = @organization
-      authorize @organization
-    end
-
-    @organization.errors.add(:profile_image, FILENAME_TOO_LONG_MESSAGE)
-    false
   end
 end
