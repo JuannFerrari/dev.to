@@ -86,10 +86,10 @@ class OrganizationsController < ApplicationController
   end
 
   def set_organization
-    @organization = Organization.find(organization_params[:id])
+    @organization = Organization.find_by(id: organization_params[:id])
+    not_found unless @organization
     @organization_membership = OrganizationMembership.find_by(user_id: current_user.id, organization_id: @organization.id)
     @org_organization_memberships = @organization.organization_memberships.includes(:user)
-    not_found unless @organization
     authorize @organization
   end
 
