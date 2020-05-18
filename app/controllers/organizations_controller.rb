@@ -1,6 +1,6 @@
 class OrganizationsController < ApplicationController
   after_action :verify_authorized
-  rescue_from Errno::ENAMETOOLONG, with: :log_image_data_to_datadog
+  rescue_from Errno::ENAMETOOLONG, with: :handle_name_too_long
 
   def create
     set_user_info
@@ -38,6 +38,13 @@ class OrganizationsController < ApplicationController
   end
 
   private
+
+  def handle_name_too_long
+    log_image_data_to_datadog
+  rescue Errno::ENAMETOOLONG
+    @organization.errors.add(:profile_image, FILENAME_TOO_LONG_MESSAGE)
+    render template: "users/edit"
+  end
 
   def permitted_params
     accessible = %i[
