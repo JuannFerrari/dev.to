@@ -1,11 +1,10 @@
 class OrganizationsController < ApplicationController
   after_action :verify_authorized
-  before_action :set_organization, only: %i[update generate_new_secret]
-  before_action :set_user_info
-  before_action :validate_filename, only: %i[create update]
   rescue_from Errno::ENAMETOOLONG, with: :log_image_data_to_datadog
 
   def create
+    set_user_info
+    validate_filename
     @form = OrganizationForm.new(organization_attributes: organization_params, current_user: current_user)
     @organization = @form.organization
     authorize @organization
@@ -19,6 +18,9 @@ class OrganizationsController < ApplicationController
   end
 
   def update
+    set_organization
+    set_user_info
+    validate_filename
     if @organization.update(organization_params.merge(profile_updated_at: Time.current))
       flash[:settings_notice] = "Your organization was successfully updated."
       redirect_to "/settings/organization"
@@ -28,6 +30,8 @@ class OrganizationsController < ApplicationController
   end
 
   def generate_new_secret
+    set_organization
+    set_user_info
     @organization.secret = @organization.generated_random_secret
     @organization.save
     flash[:settings_notice] = "Your org secret was updated"
@@ -82,7 +86,7 @@ class OrganizationsController < ApplicationController
   end
 
   def set_organization
-    @organization = Organization.find_by(id: organization_params[:id])
+    @organization = Organization.find(organization_params[:id])
     @organization_membership = OrganizationMembership.find_by(user_id: current_user.id, organization_id: @organization.id)
     @org_organization_memberships = @organization.organization_memberships.includes(:user)
     not_found unless @organization
