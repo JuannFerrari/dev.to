@@ -20,8 +20,7 @@ class OrganizationsController < ApplicationController
   def update
     set_user_info
     set_organization
-
-    if @organization.update!(organization_params.merge(profile_updated_at: Time.current))
+    if @organization.update(organization_params.merge(profile_updated_at: Time.current))
       flash[:settings_notice] = "Your organization was successfully updated."
       redirect_to "/settings/organization"
     else
