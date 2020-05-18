@@ -22,6 +22,10 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   connect_timeout: 2
   checkout_timeout: 2
+  username: juanfranciscoferrari
+  password: 
+  host: localhost
+  port: 5432
   variables:
       statement_timeout: <%= ENV['STATEMENT_TIMEOUT'] || 2500 %>
 

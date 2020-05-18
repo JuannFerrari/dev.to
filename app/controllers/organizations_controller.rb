@@ -4,7 +4,12 @@ class OrganizationsController < ApplicationController
 
   def create
     set_user_info
-    validate_filename
+
+    unless valid_filename?
+      render template: "users/edit"
+      return
+    end
+
     @form = OrganizationForm.new(organization_attributes: organization_params, current_user: current_user)
     @organization = @form.organization
     authorize @organization
@@ -18,9 +23,14 @@ class OrganizationsController < ApplicationController
   end
 
   def update
-    set_organization
     set_user_info
-    validate_filename
+    set_organization
+
+    unless valid_filename?
+      render template: "users/edit"
+      return
+    end
+
     if @organization.update(organization_params.merge(profile_updated_at: Time.current))
       flash[:settings_notice] = "Your organization was successfully updated."
       redirect_to "/settings/organization"
@@ -93,14 +103,9 @@ class OrganizationsController < ApplicationController
     authorize @organization
   end
 
-  def validate_filename
-    return if valid_filename?
-
-    render template: "users/edit"
-  end
-
   def valid_filename?
     image = params.dig("organization", "profile_image")
+
     return true unless long_filename?(image)
 
     if action_name == "create"
